@@ -4,6 +4,7 @@ module LocalApproximationPolicyEvaluation
     using Printf
     using POMDPs
     using POMDPModelTools
+    using POMDPSimulators
     using GridInterpolations
     using LocalFunctionApproximation
     using Distributions
@@ -215,10 +216,24 @@ module LocalApproximationPolicyEvaluation
     # Not explicitly stored in policy - extract from value function interpolation
     POMDPs.action(policy::LocalPolicyEvalPolicy, s, rng= Random.GLOBAL_RNG) = action_and_prob(policy, s, rng)[1]
 
-    function action_and_prob(policy::LocalPolicyEvalPolicy, s, rng= Random.GLOBAL_RNG)
-        us = [value(policy, s, a) for a in actions(policy.mdp, s)]
+    function Distributions.logpdf(policy::LocalPolicyEvalPolicy, s, a)
+        mdp = policy.mdp
+        us = [value(policy, s, a)*policy.action_probability(mdp, s, a) for a in actions(policy.mdp, s)]
         if sum(us) == 0
-            us = ones(length(us)) / length(us)
+            us = [policy.action_probability(mdp, s, a) for a in actions(policy.mdp, s)]
+        end
+        p = value(policy, s, a)*policy.action_probability(mdp, s, a) / sum(us)
+        return (p == 0) ? log(policy.action_probability(mdp, s, a)) : log(p)
+    end
+
+
+    Distributions.logpdf(policy::LocalPolicyEvalPolicy, h::SimHistory) = sum([logpdf(policy, s, a) for (s,a) in eachstep(h, (:s, :a))])
+
+    function action_and_prob(policy::LocalPolicyEvalPolicy, s, rng= Random.GLOBAL_RNG)
+        mdp = policy.mdp
+        us = [value(policy, s, a)*policy.action_probability(mdp, s, a) for a in actions(policy.mdp, s)]
+        if sum(us) == 0
+            us = [policy.action_probability(mdp, s, a) for a in actions(policy.mdp, s)]
         end
         us /= sum(us)
         ai = rand(rng, Categorical(us))
@@ -258,8 +273,9 @@ module LocalApproximationPolicyEvaluation
             end
         end
 
-        return u*policy.action_probability(mdp, s, a)
+        return u
     end
 
 
 end
+
