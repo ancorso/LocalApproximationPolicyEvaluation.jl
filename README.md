@@ -12,3 +12,4 @@ This code is adapted from: https://github.com/JuliaPOMDP/LocalApproximationValue
 * See `test/gridworld_test.jl` for a usage example on a gridworld problem.
 
 
+Maintained by Anthony Corso (acorso@stanford.edu)
