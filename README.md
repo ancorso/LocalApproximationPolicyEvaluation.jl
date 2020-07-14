@@ -1,4 +1,6 @@
 # LocalApproximationPolicyEvaluation.jl
+[![Build Status](https://travis-ci.org/sisl/LocalApproximationPolicyEvaluation.jl.svg?branch=master)](https://travis-ci.org/sisl/LocalApproximationPolicyEvaluation.jl) [![Coverage Status](https://coveralls.io/repos/github/sisl/LocalApproximationPolicyEvaluation.jl/badge.svg?branch=master)](https://coveralls.io/github/sisl/LocalApproximationPolicyEvaluation.jl?branch=master) [![codecov](https://codecov.io/gh/sisl/LocalApproximationPolicyEvaluation.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/sisl/LocalApproximationPolicyEvaluation.jl)
+
 A local approximation dynamic programming approach to policy evaluation. This algorithm computes the expected return at each state given a probability distribution over actions.
 
 This code is adapted from: https://github.com/JuliaPOMDP/LocalApproximationValueIteration.jl
