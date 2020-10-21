@@ -9,6 +9,7 @@ module LocalApproximationPolicyEvaluation
     using LocalFunctionApproximation
     using Distributions
     import POMDPs: Solver, solve, Policy, action, value
+    using POMDPLinter: @POMDP_require, @req, @subreq, @warn_requirements
 
     export LocalPolicyEvalSolver, LocalPolicyEvalPolicy, action_and_prob
 
@@ -153,13 +154,13 @@ module LocalApproximationPolicyEvaluation
                             # Generative Model
                             for j in 1:solver.n_generative_samples
                                 sp_point, r, isTerm = 0, 0, false
-                                if haskey(next_state_dict, (s,a))
+                                if solver.n_generative_samples ==1 && haskey(next_state_dict, (s,a))
                                     sp_point, r, isTerm = next_state_dict[(s,a)]
                                 else
-                                    sp, r = gen(DDNOut(:sp,:r), mdp, s, a, solver.rng)
+                                    sp, r = gen(mdp, s, a, solver.rng)
                                     isTerm = isterminal(mdp, sp)
                                     sp_point = POMDPs.convert_s(Vector{Float64}, sp, mdp)
-                                    next_state_dict[(s,a)] = (sp_point, r, isTerm)
+                                    solver.n_generative_samples == 1  && (next_state_dict[(s,a)] = (sp_point, r, isTerm))
                                 end
 
                                 u += r
@@ -253,9 +254,12 @@ module LocalApproximationPolicyEvaluation
         # mdp is generative or explicit
         if policy.is_mdp_generative
             for j in 1:policy.n_generative_samples
-                sp, r = gen(DDNOut(:sp,:r), mdp, s, a, policy.rng)
+                sp, r = gen(mdp, s, a, policy.rng)
                 sp_point = POMDPs.convert_s(Vector{Float64}, sp, mdp)
-                u += r + discount_factor*LocalFunctionApproximation.compute_value(policy.interp, sp_point)
+                u += r
+                if !isterminal(mdp, sp)
+                    u += discount_factor*LocalFunctionApproximation.compute_value(policy.interp, sp_point)
+                end
             end
             u = u / policy.n_generative_samples
         else
